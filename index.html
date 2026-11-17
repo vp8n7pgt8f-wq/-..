@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>기말 트래커</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="기말 트래커">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-512.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>:root{padding-top:env(safe-area-inset-top,0px)}body{margin:0}</style>
+</head><body>
+<style>
+/* Layout: iOS 설정 앱처럼 묶음 목록(inset grouped) + 아래 탭 바. 오늘 / 일정 / 공부법 세 화면. */
+:root {
+  --bg: #f2f2f7; --cell: #ffffff; --label: #000000; --sub: rgba(60,60,67,.62); --sep: rgba(60,60,67,.22); --fill: rgba(120,120,128,.14);
+  --blue: #007aff; --green: #34c759; --orange: #ff9500; --red: #ff3b30; --purple: #af52de; --teal: #30b0c7;
+  --indigo: #5856d6; --pink: #ff2d55; --brown: #a2845e; --gray: #8e8e93; --bar: rgba(249,249,249,.94);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #000000; --cell: #1c1c1e; --label: #ffffff; --sub: rgba(235,235,245,.6); --sep: rgba(84,84,88,.6); --fill: rgba(118,118,128,.24);
+  --blue: #0a84ff; --green: #30d158; --orange: #ff9f0a; --red: #ff453a; --purple: #bf5af2; --teal: #40c8e0;
+  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #000000; --cell: #1c1c1e; --label: #ffffff; --sub: rgba(235,235,245,.6); --sep: rgba(84,84,88,.6); --fill: rgba(118,118,128,.24);
+  --blue: #0a84ff; --green: #30d158; --orange: #ff9f0a; --red: #ff453a; --purple: #bf5af2; --teal: #40c8e0;
+  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92);
+  color-scheme: dark }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--bg); color: var(--label); font-family: var(--font); font-size: 17px; line-height: 1.35; -webkit-tap-highlight-color: transparent; }
+.page { max-width: 600px; margin: 0 auto; padding-block: 8px calc(96px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.large { font-size: 34px; font-weight: 700; letter-spacing: -.02em; margin: 8px 4px 2px; }
+.caption { font-size: 15px; color: var(--sub); margin: 0 4px 16px; font-variant-numeric: tabular-nums; }
+.caption b { color: var(--blue); font-weight: 600; }
+.group-h { font-size: 13px; color: var(--sub); text-transform: none; margin: 22px 16px 7px; display: flex; justify-content: space-between; gap: 8px; }
+.group { background: var(--cell); border-radius: 12px; overflow: hidden; }
+.group-f { font-size: 13px; color: var(--sub); margin: 7px 16px 0; line-height: 1.4; }
+.row { display: flex; align-items: center; gap: 12px; padding: 11px 16px; min-height: 44px; box-sizing: border-box; position: relative; width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left; }
+.row + .row::before { content: ""; position: absolute; top: 0; right: 0; left: 52px; border-top: .5px solid var(--sep); }
+.group.plain .row + .row::before { left: 16px; }
+button.row { cursor: pointer; }
+button.row:active, label.row:active { background: var(--fill); }
+.row:focus-visible, .tab:focus-visible, .pager button:focus-visible, .seg button:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.grow { flex: 1; min-width: 0; }
+.t { font-size: 17px; }
+.s { font-size: 13px; color: var(--sub); margin-top: 2px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
+.must { font-size: 12px; font-weight: 600; color: var(--orange); }
+/* checkbox */
+label.row { cursor: pointer; align-items: flex-start; }
+label.row input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.ck { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--gray); flex: none; display: grid; place-items: center; margin-top: 1px; box-sizing: border-box; transition: background .15s, border-color .15s; }
+.ck svg { width: 14px; height: 14px; opacity: 0; }
+label.row input:checked + .ck { background: var(--green); border-color: var(--green); }
+label.row input:checked + .ck svg { opacity: 1; }
+label.row input:focus-visible + .ck { outline: 2px solid var(--blue); outline-offset: 2px; }
+label.row input:checked ~ .grow .t { color: var(--sub); text-decoration: line-through; }
+/* pager */
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 0; }
+.pager button { background: none; border: 0; color: var(--blue); font: inherit; font-size: 28px; line-height: 1; padding: 6px 12px; cursor: pointer; border-radius: 8px; }
+.pager button:disabled { color: var(--gray); opacity: .4; cursor: default; }
+.pager .mid { text-align: center; }
+.pager .mid .large { margin: 0; font-size: 30px; }
+.pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--blue); color: #fff; white-space: nowrap; }
+.pill.gray { background: var(--fill); color: var(--sub); }
+.pill.red { background: var(--red); }
+.prog { height: 6px; border-radius: 3px; background: var(--fill); overflow: hidden; margin: 12px 4px 0; }
+.prog i { display: block; height: 100%; width: 0; background: var(--green); border-radius: 3px; transition: width .25s; }
+.today-btn { background: var(--fill); color: var(--blue); border: 0; font: inherit; font-size: 15px; font-weight: 600; padding: 6px 14px; border-radius: 99px; cursor: pointer; }
+.center { text-align: center; margin-top: 10px; }
+/* schedule rows */
+.cnt { font-size: 15px; color: var(--sub); font-variant-numeric: tabular-nums; }
+.cnt.full { color: var(--green); font-weight: 600; }
+.chev { color: var(--gray); opacity: .6; font-size: 20px; line-height: 1; }
+.ring { width: 28px; height: 28px; flex: none; }
+.num { width: 22px; height: 22px; border-radius: 50%; background: var(--fill); color: var(--sub); font-size: 13px; font-weight: 600; display: grid; place-items: center; flex: none; }
+input.text { font: inherit; border: 0; background: transparent; color: var(--label); width: 100%; padding: 0; outline: none; }
+input.text::placeholder { color: var(--gray); }
+/* tab bar */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--bar); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: .5px solid var(--sep); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.tab { flex: 1; max-width: 200px; background: none; border: 0; font: inherit; font-size: 10px; font-weight: 500; color: var(--gray); display: grid; justify-items: center; gap: 2px; padding: 7px 0 6px; cursor: pointer; }
+.tab svg { width: 26px; height: 26px; }
+.tab[aria-selected="true"] { color: var(--blue); }
+.status { font-size: 12px; color: var(--sub); text-align: center; margin-top: 24px; }
+@media (prefers-reduced-motion: reduce) { .prog i, .ck { transition: none; } }
+</style>
+
+<main class="page" id="app"></main>
+
+<nav class="tabbar" role="tablist">
+  <button class="tab" role="tab" data-tab="today" id="tab-today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>오늘</button>
+  <button class="tab" role="tab" data-tab="plan" id="tab-plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>일정</button>
+  <button class="tab" role="tab" data-tab="how" id="tab-how"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>공부법</button>
+</nav>
+
+<script>
+const SUBJ = {
+  calc:{n:"미적분",c:"var(--blue)"}, eng:{n:"영어",c:"var(--teal)"}, chem:{n:"화학",c:"var(--red)"},
+  bio:{n:"생명",c:"var(--green)"}, geo:{n:"기하",c:"var(--purple)"}, chn:{n:"중국어",c:"var(--brown)"},
+  life:{n:"생과탐",c:"var(--pink)"}, lit:{n:"문학",c:"var(--gray)"}, all:{n:"전체",c:"var(--indigo)"}
+};
+const PLAN = [
+ {d:"2026-11-17",w:"화",ph:"1주차 · 개념 1회독",t:[
+  ["점심 20분","eng","4단원 단어 외우기"],
+  ["16:30 방과후","calc","미적분 방과후 수업 집중 (필기한 예제 표시)"],
+  ["야자1 앞 30분","all","과목별 범위·수행 마감 한 장에 적기 + 생과탐 6조각 나누기 + 중국어 시험 형식(한자 쓰기?) 쌤께 묻기",1],
+  ["야자1 나머지","chem","화학 '분자 구조와 성질' 교과서 개념 정리"],
+  ["야자2","eng","4단원 본문 해석 + 어법 포인트 표시 (쌤 필기 기준)",1],
+  ["밤 11~1시","calc","교과서 '함수의 증가와 감소' 개념 + 예제 전부",1],
+  ["자기 전 20분","chn","1~5단원(중간까지) 단어장 만들기: 한자·병음+성조·뜻 3칸"]]},
+ {d:"2026-11-18",w:"수",t:[
+  ["점심 20분","eng","4단원 단어 복습"],
+  ["16:30 자습","bio","생명 2단원 앞 1/3 정독 + 백지에 키워드 써 보기"],
+  ["야자1","geo","기하 벡터 앞부분 개념 + 교과서 문제 (벡터는 범위 확정)"],
+  ["야자2","eng","4단원 본문 2회독 + 빈칸 셀프테스트",1],
+  ["밤 10시대 40분","life","생과탐 범위 1/6 읽고 시험 나올 키워드 표시"],
+  ["밤 11~1시","calc","교과서 '극대와 극소' 개념 + 예제",1],
+  ["자기 전 20분","chn","1단원 단어: 병음+성조 소리 내서 외우기 (한자는 뜻만 연결)"]]},
+  {d:"2026-11-19",w:"목",ex:"수능 휴업",t:[
+  ["09:30~10:00","all","중간 시험지 채점: 미적분·화학 틀린 문제에 원인 표시 (개념/계산/시간)"],
+  ["10:00~12:00","calc","교과서 '함수의 그래프(개형 그리기)' 개념 + 예제",1],
+  ["13:00~14:30","chem","화학 '분자 구조와 성질' 교과서 문제 + 학교 프린트"],
+  ["14:30~16:00","eng","5단원 본문 해석 + 어법 포인트 표시",1],
+  ["16:00~17:00","bio","생명 2단원 가운데 1/3 정독 + 백지 복습"],
+  ["17:30~18:10","life","생과탐 범위 2/6 읽고 키워드 표시"],
+  ["19:00~20:30","geo","기하 벡터 뒷부분 개념 + 교과서 문제"],
+  ["밤 11~1시","calc","교과서 '방정식·부등식에의 활용' 개념 + 예제",1],
+  ["자기 전 20분","chn","2단원 단어: 병음+성조 소리 내서 외우기"]]},
+ {d:"2026-11-20",w:"금",ex:"수능 휴업",t:[
+  ["10:00~12:00","calc","교과서 '속도와 거리' 개념 + 예제 → 교과서 1회독 끝",1],
+  ["13:00~14:30","chem","화학 범위 가운데 단원 개념 정리 (교과서 목차 순서대로)"],
+  ["14:30~16:00","eng","5단원 본문 2회독 + 빈칸 셀프테스트",1],
+  ["16:00~17:30","chem","화학 '중화 반응의 양적 관계' 개념 + 교과서 예제"],
+  ["17:30~18:10","life","생과탐 범위 3/6 읽고 키워드 표시"],
+  ["19:00~20:30","eng","모고 지문 1~3번: 쌤 필기본 보고 해석 + 필기 문장 표시",1],
+  ["밤 11~1시","calc","교과서 중단원 문제 전부 (틀린 것 표시)",1],
+  ["자기 전 20분","chn","3단원 단어: 병음+성조 소리 내서 외우기"]]},
+ {d:"2026-11-21",w:"토",t:[
+  ["10:00~12:00","calc","개념원리 '증가·감소, 극대·극소' 필수예제 + 유제",1],
+  ["13:00~14:30","geo","기하 삼수선 정리~ 개념 + 교과서 문제 (범위에서 빠지면 벡터 문제로 바꾸기)"],
+  ["14:30~16:00","chem","화학 프린트 개념 빈칸 셀프테스트 → 1회독 끝"],
+  ["16:00~17:30","eng","모고 지문 4~6번 해석 + 핵심 문장 표시",1],
+  ["17:30~18:30","life","생과탐 범위 4/6 읽고 키워드 표시"],
+  ["19:00~20:30","bio","생명 2단원 마지막 1/3 정독 + 백지 복습"],
+  ["20:30~21:00","chn","4단원~5단원 중간 단어: 병음+성조"],
+  ["밤 11~1시","calc","이번 주 틀린 문제 다시 풀기",1]]},
+ {d:"2026-11-22",w:"일",t:[
+  ["10:00~12:00","calc","개념원리 '그래프·활용·속도' 필수예제 + 유제",1],
+  ["13:00~14:30","geo","기하 개념원리 필수예제 + 교과서 문제 오답"],
+  ["14:30~16:00","eng","모고 지문 7~8번 해석 + 핵심 문장",1],
+  ["16:00~17:30","bio","완자 2단원 1회 + 외울 것 목록 만들기"],
+  ["17:30~18:30","life","생과탐 범위 5/6 읽고 키워드 표시"],
+  ["19:00~20:30","chem","화학 프린트 속 쌤 문제 1회 (앞 절반)"],
+  ["21:00~21:10","all","주간 점검: 못 한 칸 다음 주로 옮기기"],
+  ["밤 11~1시","calc","개념원리에서 틀린 문제 다시 풀기",1]]},
+ {d:"2026-11-23",w:"월",ph:"2주차 · 문제 풀이와 오답",t:[
+  ["점심 20분","eng","4단원 본문 빈칸 셀프테스트"],
+  ["16:30 자습","chem","화학 '중화 반응 양적 관계' 계산 문제 반복 (프린트 → 완자)"],
+  ["야자1","geo","기하 개념원리 벡터 유제·연습문제 (틀린 것 표시)"],
+  ["야자2","eng","4·5단원 본문 빈칸 셀프테스트 (밀린 칸 있으면 여기서 메우기)",1],
+  ["밤 10시대 40분","life","생과탐 범위 6/6 → 1회독 끝"],
+  ["밤 11~1시","calc","개념원리 연습문제 '증가·감소, 극값' (틀린 것 표시)",1],
+  ["자기 전 20분","chn","1~2단원 본문 듣고 따라 읽기 + 핵심 문장"]]},
+{d:"2026-11-24",w:"화",t:[
+  ["점심 20분","eng","5단원 본문 빈칸 셀프테스트"],
+  ["16:30 방과후","calc","미적분 방과후 수업 집중"],
+  ["야자1","bio","완자 2회차: 틀린 문제·고난도만 (실수 0이 목표)"],
+  ["야자2","eng","모고 지문 9~10번 → 지문 10개 1회독 끝",1],
+  ["밤 10시대 40분","life","생과탐 키워드 백지 셀프테스트 (앞 절반)"],
+  ["밤 11~1시","calc","개념원리 연습문제 '그래프 개형' (틀린 것 표시)",1],
+  ["자기 전 20분","chn","3~4단원 본문 듣고 따라 읽기 + 핵심 문장"]]},
+ {d:"2026-11-25",w:"수",t:[
+  ["점심 20분","eng","범위 단어 전체 셀프테스트"],
+  ["16:30 자습","chem","화학 프린트 속 쌤 문제 1회 (나머지 절반)"],
+  ["야자1","geo","기하 개념원리 연습문제"],
+  ["야자2","eng","사설 프린트로 4단원 변형문제 (어법·서술형)",1],
+  ["밤 10시대 40분","life","생과탐 키워드 백지 셀프테스트 (뒤 절반)"],
+  ["밤 11~1시","calc","개념원리 연습문제 '그래프·활용·속도와 거리' (틀린 것 표시)",1],
+  ["자기 전 20분","chn","5단원 본문 듣고 따라 읽기 (병음 보면서)"]]},
+ {d:"2026-11-26",w:"목",t:[
+  ["점심 20분","eng","모고 지문 핵심 문장 복습"],
+  ["16:30 방과후","calc","미적분 방과후 수업 집중"],
+  ["야자1","chem","화학 중화 반응 양적 관계 계산 문제만 반복 + 오답"],
+  ["야자2","eng","사설 프린트로 5단원 변형문제 (어법·서술형)",1],
+  ["밤 10시대 40분","life","생과탐 프린트 용어 가리고 단답 말하기"],
+  ["밤 11~1시","calc","오답 1회차 다시 풀기 (안 보고)",1],
+  ["자기 전 20분","chn","본문 한자만 보고 읽어 보기"]]},
+ {d:"2026-11-27",w:"금",t:[
+  ["16:30~18:00","bio","생명 2단원 2회독: 외울 것 목록 셀프테스트"],
+  ["19:00~20:30","eng","모고 지문 10개 2회독",1],
+  ["21:00~22:00","geo","기하 오답 다시 풀기"],
+  ["22:00~22:40","life","생과탐 틀린 키워드만 다시"],
+  ["밤 11~1시","calc","교과서+개념원리에서 20문제 골라 50분 재고 풀기 + 채점",1],
+  ["자기 전 20분","chn","단어 셀프테스트: 한자 보고 뜻·병음 말하기"]]},
+ {d:"2026-11-28",w:"토",ph:"마무리 · 실전과 회독",t:[
+  ["10:00~12:30","calc","실전 연습 2세트 (20문제·50분씩) + 오답",1],
+  ["13:30~15:00","eng","4·5단원 본문 전체 암기 체크",1],
+  ["15:00~16:30","chem","화학 프린트 쌤 문제 2회차 + 완자로 틀린 유형 보충"],
+  ["16:30~17:30","bio","완자 실험·그래프 문제만 다시"],
+  ["19:00~20:30","lit","문학 수업 작품 목록 만들고 앞 절반 정리"],
+  ["20:30~21:00","chn","단어 전체 셀프테스트"],
+  ["17:30~18:30","life","생과탐 전체 2회독"],
+  ["밤 11~1시","calc","이번 주 오답 전부 2회차",1]]},
+ {d:"2026-11-29",w:"일",t:[
+  ["10:00~12:00","calc","전체 오답 2회차 + 자주 틀린 유형 메모",1],
+  ["13:00~14:30","eng","모고 지문 최종 + 서술형 대비",1],
+  ["14:30~15:30","geo","기하 최종 오답"],
+  ["15:30~16:30","chem","화학 오답노트 최종"],
+  ["19:00~20:30","lit","문학 작품 나머지 절반 정리"],
+  ["20:30~21:00","chn","본문 최종 암기"],
+  ["21:00~21:10","all","시험 시간표 보고 12/1~12/4 칸에 과목 적기"],
+  ["16:30~17:30","life","생과탐 최종 셀프테스트"],
+  ["밤 11~1시","calc","자주 틀린 유형만 한 번 더",1]]},
+ {d:"2026-11-30",w:"월",t:[
+  ["점심 20분","eng","본문 핵심 문장 최종"],
+  ["16:30 자습","all","12/1 시험 과목 개념 최종 훑기",1],
+  ["야자1","all","12/1 시험 과목 오답만 다시",1],
+  ["야자2","calc","미적분 오답 3회차 (미적분 시험 날까지 매일 조금씩)"],
+  ["밤","all","1시 전에 자기. 잠이 점수다"]]},
+ {d:"2026-12-01",w:"화",ph:"기말고사",exam:1,t:[
+  ["시험 끝나고","all","오늘 본 과목은 잊기. 채점은 시험 다 끝나고"],
+  ["오후","all","내일 시험 과목 개념 최종 훑기",1],
+  ["저녁","all","내일 시험 과목 오답만 다시",1],
+  ["밤","all","1시 전에 자기"]]},
+ {d:"2026-12-02",w:"수",exam:1,t:[
+  ["오후","all","내일 시험 과목 개념 최종 훑기",1],
+  ["저녁","all","내일 시험 과목 오답만 다시",1],
+  ["밤","all","1시 전에 자기"]]},
+ {d:"2026-12-03",w:"목",exam:1,t:[
+  ["오후","all","내일 시험 과목 개념 최종 훑기",1],
+  ["저녁","all","내일 시험 과목 오답만 다시",1],
+  ["밤","all","1시 전에 자기"]]},
+ {d:"2026-12-04",w:"금",exam:1,t:[
+  ["시험","all","마지막 날. 끝까지 보고 나오기",1],
+  ["끝나고","all","푹 쉬기. 수고했어"]]}
+];
+
+
+const HOW = [
+ ["calc","교과서 → 개념원리",["교과서 예제를 해설 가리고 풀기","개념원리 필수예제+유제 → 연습문제 순서","틀린 문제 번호에 표시하고 3일 뒤 다시"],"버릴 것: 개념원리 발전·심화. 쉬운·중간 문제를 다 맞히는 게 먼저야."],
+ ["eng","쌤 필기본 → 본문 → 사설 프린트",["쌤 필기 표시된 문장부터 해석·어법 외우기","본문 빈칸 셀프테스트 (안 보고 채우기)","사설 프린트 변형문제로 확인"],"버릴 것: 모고 지문 새로 해석하는 시간. 필기본 문장 위주로만 가."],
+ ["chem","학교 프린트 → 완자",["프린트 개념 정리 (수업이 프린트 중심)","프린트 속 쌤 문제 2회","완자는 틀린 유형만 보충"],"중화 반응 양적 관계는 'H⁺ 몰수 = OH⁻ 몰수' 하나로 푸는 계산을 손에 붙을 때까지 반복."],
+ ["bio","교과서 → 완자",["교과서 정독 후 백지에 키워드 써 보기","완자 1회, 틀린 문제만 2회","실험·그래프 문제 따로 한 번 더"],"개념은 강점이야. 동점자가 많아서 실수 하나로 등급이 갈려."],
+ ["life","학교 프린트만",["1회독: 단답으로 나올 용어에 표시","2회독: 용어 가리고 말하기","3회독: 틀린 용어만"],"객관식+단답이고 거의 프린트에서 나오니까 다른 자료는 안 봐도 돼."],
+ ["geo","교과서 → 개념원리",["벡터는 그림부터 그리고 식 세우기","개념원리 필수예제+유제","삼수선 정리는 범위 확정되면"],"버릴 것: 연습문제 뒤쪽 어려운 문제."],
+ ["chn","단어 프린트 → 교과서 본문",["병음+성조를 소리 내서 외우기","한자는 모양과 뜻만 연결","본문 듣고 따라 읽기"],"한자 쓰기가 시험에 나오는지 먼저 확인해. 안 나오면 쓰기 연습은 통째로 버려."],
+ ["lit","교과서 + 학교 프린트",["하던 대로 작품별 정리 (퀴즈로 외우기)","11/28~29 이틀만"],"시간 없으면 제일 먼저 줄이는 과목."]
+];
+const KEY = "final-tracker-v1", UIKEY = "final-tracker-ui";
+const EXAM = "2026-12-01";
+let state = {}, db = null, statusText = "체크는 이 기기에 저장돼.";
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+let ui = { tab: "today", day: null };
+try { Object.assign(ui, JSON.parse(localStorage.getItem(UIKEY) || "{}")); } catch (e) {}
+
+const $app = document.getElementById("app");
+const CHECK = '<svg viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m3 7.5 2.6 2.5L11 4.5"/></svg>';
+const WD = {"월":"월요일","화":"화요일","수":"수요일","목":"목요일","금":"금요일","토":"토요일","일":"일요일"};
+
+function todayStr() { return new Date(Date.now() + 9*3600*1000).toISOString().slice(0,10); }
+function md(d) { const [,m,dd] = d.split("-"); return (+m) + "/" + (+dd); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify(ui)); } catch (e) {} }
+function st(d) { return state[d] || { done: {} }; }
+function count(day) { const s = st(day.d); const c = day.t.filter((_, i) => s.done && s.done[i]).length; return [c, day.t.length]; }
+function defaultDay() {
+  const t = todayStr();
+  if (PLAN.some(p => p.d === t)) return t;
+  return t < PLAN[0].d ? PLAN[0].d : PLAN[PLAN.length - 1].d;
+}
+function totals() { let c = 0, n = 0; PLAN.forEach(p => { const [a, b] = count(p); c += a; n += b; }); return [c, n]; }
+function dday() {
+  const diff = Math.round((Date.parse(EXAM) - Date.parse(todayStr())) / 86400000);
+  return diff > 0 ? "D-" + diff : diff === 0 ? "D-DAY" : "시험 기간";
+}
+function ring(c, n) {
+  const r = 11, L = 2 * Math.PI * r, f = n ? c / n : 0;
+  return `<svg class="ring" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="${r}" fill="none" stroke="var(--fill)" stroke-width="3"/>
+    ${f > 0 ? "" : "<!--"}<circle cx="14" cy="14" r="${r}" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(L*f).toFixed(2)} ${L.toFixed(2)}" transform="rotate(-90 14 14)"/>${f > 0 ? "" : "-->"}</svg>`;
+}
+
+function taskRow(day, t, i) {
+  const s = st(day.d), on = s.done && s.done[i], sj = SUBJ[t[1]];
+  return `<label class="row" for="c-${day.d}-${i}">
+    <input type="checkbox" id="c-${day.d}-${i}" data-d="${day.d}" data-i="${i}"${on ? " checked" : ""}>
+    <span class="ck">${CHECK}</span>
+    <span class="grow"><span class="t">${esc(t[2])}</span>
+      <span class="s"><span class="dot" style="background:${sj.c}"></span>${sj.n} · ${esc(t[0])}${t[3] ? ' · <span class="must">★ 필수</span>' : ""}</span></span>
+  </label>`;
+}
+
+function viewToday() {
+  if (!ui.day || !PLAN.some(p => p.d === ui.day)) ui.day = defaultDay();
+  const idx = PLAN.findIndex(p => p.d === ui.day), day = PLAN[idx], s = st(day.d);
+  const [c, n] = count(day), isToday = day.d === todayStr();
+  const must = day.t.map((t, i) => [t, i]).filter(([t]) => t[3]);
+  const rest = day.t.map((t, i) => [t, i]).filter(([t]) => !t[3]);
+  const mustDone = must.filter(([, i]) => s.done && s.done[i]).length;
+  let h = `<div class="pager">
+      <button id="prev" aria-label="이전 날"${idx === 0 ? " disabled" : ""}>‹</button>
+      <div class="mid"><div class="large">${md(day.d)} ${WD[day.w]}</div>
+        <div class="s" style="justify-content:center;margin-top:4px">${isToday ? '<span class="pill">오늘</span>' : ""}${day.ex ? `<span class="pill gray">${esc(day.ex)}</span>` : ""}${day.exam ? '<span class="pill red">기말고사</span>' : ""}<span>${dday()}</span></div></div>
+      <button id="next" aria-label="다음 날"${idx === PLAN.length - 1 ? " disabled" : ""}>›</button>
+    </div>
+    <div class="prog"><i style="width:${n ? c / n * 100 : 0}%"></i></div>
+    <div class="caption" style="margin-top:8px;text-align:center">${c}/${n} 완료${must.length ? ` · 필수 <b>${mustDone}/${must.length}</b>` : ""}</div>`;
+  if (!isToday) h += `<div class="center"><button class="today-btn" id="goToday">오늘로</button></div>`;
+  if (day.exam) h += `<div class="group-h">이날 시험 과목</div><div class="group plain"><div class="row">
+      <input class="text" id="note-${day.d}" data-d="${day.d}" placeholder="예: 미적분, 화학" value="${esc(s.note || "")}" aria-label="이날 시험 과목"></div></div>`;
+  if (must.length) h += `<div class="group-h"><span>★ 필수</span><span>이것만 해도 오늘은 성공</span></div>
+    <div class="group">${must.map(([t, i]) => taskRow(day, t, i)).join("")}</div>`;
+  if (rest.length) h += `<div class="group-h"><span>더 하면 좋은 것</span><span>시간 없으면 아래부터 버려</span></div>
+    <div class="group">${rest.map(([t, i]) => taskRow(day, t, i)).join("")}</div>`;
+  h += `<div class="status">${esc(statusText)}</div>`;
+  return h;
+}
+
+function viewPlan() {
+  const [c, n] = totals(), today = todayStr();
+  let h = `<div class="large">일정</div><div class="caption">${dday()} · 전체 <b>${n ? Math.round(c / n * 100) : 0}%</b> (${c}/${n})</div>`;
+  let open = false;
+  PLAN.forEach(day => {
+    if (day.ph) { if (open) h += `</div>`; h += `<div class="group-h">${esc(day.ph)}</div><div class="group">`; open = true; }
+    const [a, b] = count(day), s = st(day.d);
+    const subs = [...new Set(day.t.filter(t => t[3]).map(t => SUBJ[t[1]].n))].join(" · ");
+    const sub = day.exam ? (s.note ? "시험: " + s.note : "시험 과목 적기") : (subs ? "필수: " + subs : "");
+    h += `<button class="row" data-go="${day.d}">${ring(a, b)}
+      <span class="grow"><span class="t">${md(day.d)} ${day.w}${day.d === today ? ' <span class="pill">오늘</span>' : ""}${day.ex ? ` <span class="pill gray">${esc(day.ex)}</span>` : ""}</span>
+      <span class="s">${esc(sub)}</span></span>
+      <span class="cnt${a === b ? " full" : ""}">${a}/${b}</span><span class="chev">›</span></button>`;
+  });
+  if (open) h += `</div>`;
+  h += `<div class="group-f">못 한 칸은 일요일 점검 때 다음 주로 옮기면 돼.</div>`;
+  return h;
+}
+
+function viewHow() {
+  let h = `<div class="large">공부법</div><div class="caption">과목별 자료 순서와 버릴 것</div>`;
+  HOW.forEach(([k, src, steps, note]) => {
+    const sj = SUBJ[k];
+    h += `<div class="group-h"><span style="display:flex;align-items:center;gap:6px"><span class="dot" style="background:${sj.c}"></span>${sj.n}</span><span>${esc(src)}</span></div>
+      <div class="group">${steps.map((x, i) => `<div class="row"><span class="num">${i + 1}</span><span class="grow t">${esc(x)}</span></div>`).join("")}</div>
+      <div class="group-f">${esc(note)}</div>`;
+  });
+  return h;
+}
+
+function render() {
+  const v = ui.tab === "plan" ? viewPlan() : ui.tab === "how" ? viewHow() : viewToday();
+  $app.innerHTML = v;
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === ui.tab ? "true" : "false"));
+}
+function go(tab, day) { ui.tab = tab; if (day) ui.day = day; saveUI(); render(); window.scrollTo(0, 0); }
+
+document.querySelector(".tabbar").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b) go(b.dataset.tab, b.dataset.tab === "today" ? (ui.tab === "today" ? defaultDay() : ui.day) : null); });
+$app.addEventListener("click", e => {
+  const g = e.target.closest("[data-go]"); if (g) return go("today", g.dataset.go);
+  const idx = PLAN.findIndex(p => p.d === ui.day);
+  if (e.target.closest("#prev") && idx > 0) return go("today", PLAN[idx - 1].d);
+  if (e.target.closest("#next") && idx < PLAN.length - 1) return go("today", PLAN[idx + 1].d);
+  if (e.target.closest("#goToday")) return go("today", defaultDay());
+});
+$app.addEventListener("change", e => {
+  const el = e.target, d = el.dataset.d; if (!d) return;
+  state[d] = state[d] || { done: {} }; state[d].done = state[d].done || {};
+  if (el.type === "checkbox") { if (el.checked) state[d].done[el.dataset.i] = true; else delete state[d].done[el.dataset.i]; }
+  else state[d].note = el.value.trim();
+  render(); persist(d);
+});
+
+async function persist(d) {
+  saveLocal();
+  if (!db) return;
+  try { await db.doc("progress/" + d).set({ done: state[d].done || {}, note: state[d].note || "" }); }
+  catch (e) { statusText = "이 기기에만 저장됨 (서버 저장 실패)"; }
+}
+
+render();
+
+(async () => {
+  if (!(window.claude && window.claude.use)) return;
+  try {
+    db = await window.claude.use("db");
+    if (!db) return;
+    const snap = await db.collection("progress").get();
+    snap.docs.forEach(doc => { const v = doc.data() || {}; state[doc.id] = { done: v.done || {}, note: v.note || "" }; });
+    saveLocal(); statusText = "체크는 자동 저장돼. 어느 기기에서 열어도 같아."; render();
+  } catch (e) { db = null; }
+})();
+</script>
+
+</body></html>
