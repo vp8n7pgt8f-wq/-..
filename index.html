@@ -20,18 +20,18 @@
 :root {
   --bg: #f2f2f7; --cell: #ffffff; --label: #000000; --sub: rgba(60,60,67,.62); --sep: rgba(60,60,67,.22); --fill: rgba(120,120,128,.14);
   --blue: #007aff; --green: #34c759; --orange: #ff9500; --red: #ff3b30; --purple: #af52de; --teal: #30b0c7;
-  --indigo: #5856d6; --pink: #ff2d55; --brown: #a2845e; --gray: #8e8e93; --bar: rgba(249,249,249,.94); --sea1: #f1fbfa; --sea2: #d9ecff; --bub: rgba(60,130,200,.35); --gold: #f5b800;
+  --indigo: #5856d6; --pink: #ff2d55; --brown: #a2845e; --gray: #8e8e93; --bar: rgba(249,249,249,.94); --sea1: #f1fbfa; --sea2: #d9ecff; --bub: rgba(60,130,200,.35); --rope: #b08a5a; --rope-d: #8a6234; --goldbg: #fff4cf; --gold: #f5b800;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #000000; --cell: #1c1c1e; --label: #ffffff; --sub: rgba(235,235,245,.6); --sep: rgba(84,84,88,.6); --fill: rgba(118,118,128,.24);
   --blue: #0a84ff; --green: #30d158; --orange: #ff9f0a; --red: #ff453a; --purple: #bf5af2; --teal: #40c8e0;
-  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92); --sea1: #15304f; --sea2: #0a1626; --bub: rgba(180,220,255,.35); --gold: #ffcc1a;
+  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92); --sea1: #15304f; --sea2: #0a1626; --bub: rgba(180,220,255,.35); --rope: #c9a576; --rope-d: #a07a48; --goldbg: #3a2f10; --gold: #ffcc1a;
   color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #000000; --cell: #1c1c1e; --label: #ffffff; --sub: rgba(235,235,245,.6); --sep: rgba(84,84,88,.6); --fill: rgba(118,118,128,.24);
   --blue: #0a84ff; --green: #30d158; --orange: #ff9f0a; --red: #ff453a; --purple: #bf5af2; --teal: #40c8e0;
-  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92); --sea1: #15304f; --sea2: #0a1626; --bub: rgba(180,220,255,.35); --gold: #ffcc1a;
+  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92); --sea1: #15304f; --sea2: #0a1626; --bub: rgba(180,220,255,.35); --rope: #c9a576; --rope-d: #a07a48; --goldbg: #3a2f10; --gold: #ffcc1a;
   color-scheme: dark }
 html { -webkit-text-size-adjust: 100%; }
 body { background: var(--bg); color: var(--label); font-family: var(--font); font-size: 17px; line-height: 1.35; -webkit-tap-highlight-color: transparent; }
@@ -109,6 +109,21 @@ input.text::placeholder { color: var(--gray); }
 .log .d.today { background: var(--fill); color: var(--label); font-weight: 600; }
 .log .d img { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) { .fish-new, .sea .bob, .sea .bub { animation: none; } .sea .bub { display: none; } }
+.catch { background: var(--cell); border-radius: 12px; padding: 12px 16px 14px; position: relative; overflow: hidden; }
+.catch.full { background: linear-gradient(180deg, var(--goldbg), var(--cell)); }
+.catch-h { display: flex; justify-content: space-between; font-size: 13px; color: var(--sub); position: relative; z-index: 50; }
+.catch-h b { color: var(--blue); font-weight: 600; }
+.catch .full-net { font-weight: 700; font-size: 15px; }
+.bag { position: relative; width: min(100%, 300px); aspect-ratio: 200 / 150; margin: 6px auto 0; }
+.bag .mesh { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pile { position: absolute; left: 9%; right: 9%; top: 6%; bottom: 10%; }
+.pile img { height: auto; max-width: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
+.bunting { position: absolute; left: 0; right: 0; top: 30px; width: 100%; height: 34px; z-index: 45; }
+.bunting path[fill] { transform-origin: center top; transform-box: fill-box; animation: wave 2.4s ease-in-out infinite; }
+.bunting.up path[fill] { animation: drop .5s ease-out both, wave 2.4s ease-in-out .5s infinite; }
+@keyframes wave { 50% { transform: rotate(8deg); } }
+@keyframes drop { from { transform: translateY(-30px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bunting path[fill] { animation: none !important; } }
 .status { font-size: 12px; color: var(--sub); text-align: center; margin-top: 24px; }
 @media (prefers-reduced-motion: reduce) { .prog i, .ck { transition: none; } }
 </style>
@@ -454,6 +469,37 @@ function taskRow(day, t, i) {
   </label>`;
 }
 
+function netScene(day, s, c, n) {
+  const full = c === n && n > 0, fresh = lastCatch && lastCatch.startsWith(day.d);
+  const got = day.t.map((t, i) => [t, i]).filter(([, i]) => s.done && s.done[i]);
+  const fill = n ? c / n : 0;
+  const fishes = got.map(([t, i], j) => {
+    const yb = 6 + (n > 1 ? j / (n - 1) : 0) * 50;
+    const xb = 50 + (j % 2 ? 1 : -1) * (8 + (j * 37) % 19) - 14;
+    const rot = ((j * 53) % 34) - 17, big = !!t[3];
+    return `<img class="${lastCatch === day.d + "-" + i ? "fish-new" : ""}" src="${SPR[big ? "daily_yellow" : "daily_blue"]}" alt="" style="position:absolute;left:${xb}%;bottom:${yb}%;width:${big ? 30 : 25}%;transform:rotate(${rot}deg);z-index:${2 + j}">`;
+  }).join("");
+  const flags = full ? `<svg class="bunting${fresh ? " up" : ""}" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M4 6Q150 34 296 6" fill="none" stroke="#7a5a3a" stroke-width="1.6"/>
+      ${["#e53935","#fdd835","#1e88e5","#43a047","#fb8c00","#8e24aa","#e53935","#fdd835","#1e88e5","#43a047","#fb8c00"].map((col, i) => { const x = 18 + i * 25.5, y = 6 + 28 * (1 - Math.pow((x - 150) / 146, 2)) * .5; return `<path d="M${x - 9} ${y}L${x + 9} ${y}L${x} ${y + 15}Z" fill="${col}" style="animation-delay:${i * .08}s"/>`; }).join("")}
+    </svg>` : "";
+  return `<div class="catch${full ? " full" : ""}">
+    <div class="catch-h"><span class="${full ? "full-net" : ""}">${full ? "만선! 깃발 올려" : "오늘의 그물"}</span><span>${full ? `${n}마리 전부 잡았어` : `만선까지 <b>${n - c}마리</b>`}</span></div>
+    ${flags}
+    <div class="bag">
+      <svg class="mesh" viewBox="0 0 200 150" preserveAspectRatio="none" aria-hidden="true">
+        <defs><pattern id="meshP" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0H12M0 0V12" stroke="var(--rope)" stroke-width="1.1" fill="none"/></pattern>
+        <clipPath id="bagC"><path d="M14 10Q100 2 186 10L172 120Q100 160 28 120Z"/></clipPath>
+        <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sea1)"/><stop offset="1" stop-color="var(--sea2)"/></linearGradient></defs>
+        <g clip-path="url(#bagC)"><rect x="0" y="${150 - 150 * fill * .85}" width="200" height="150" fill="url(#waterG)" opacity=".55" style="transition:y .4s"/></g>
+        <path d="M14 10Q100 2 186 10L172 120Q100 160 28 120Z" fill="url(#meshP)" opacity=".75"/>
+        <path d="M14 10Q100 2 186 10L172 120Q100 160 28 120Z" fill="none" stroke="var(--rope)" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M10 10Q100 0 190 10" fill="none" stroke="var(--rope-d)" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+      <div class="pile">${fishes}${full ? [[2, 74, -24, "daily_blue"], [70, 78, 18, "daily_yellow"], [36, 84, 6, "daily_blue"], [56, 2, 12, "daily_yellow"], [14, 30, -8, "daily_blue"]].map(([x, y, r, k]) => `<img src="${SPR[k]}" alt="" style="position:absolute;left:${x}%;bottom:${y}%;width:24%;transform:rotate(${r}deg);z-index:30">`).join("") : ""}${full ? `<img class="gold${fresh ? " fish-new" : ""}" src="${SPR.goldfish}" alt="만선 금붕어" style="position:absolute;left:24%;bottom:46%;width:52%;z-index:40">` : ""}</div>
+    </div>
+  </div>`;
+}
 function viewToday() {
   if (!ui.day || !PLAN.some(p => p.d === ui.day)) ui.day = defaultDay();
   const idx = PLAN.findIndex(p => p.d === ui.day), day = PLAN[idx], s = st(day.d);
@@ -469,11 +515,7 @@ function viewToday() {
     </div>
     <div class="prog"><i style="width:${n ? c / n * 100 : 0}%"></i></div>
     <div class="caption" style="margin-top:8px;text-align:center">${c}/${n} 완료${must.length ? ` · 필수 <b>${mustDone}/${must.length}</b>` : ""}</div>`;
-  h += `<div class="group"><div class="net"><div class="lbl"><span class="${c === n ? "full-net" : ""}">${c === n ? "만선! 오늘 그물이 꽉 찼어" : "오늘의 그물"}</span><span>${c === n ? "" : `만선까지 <b>${n - c}마리</b>`}</span></div>
-    ${c === n ? `<span class="${lastCatch && lastCatch.startsWith(day.d) ? "fish-new" : ""}" style="width:100%;display:flex;justify-content:center">${spr("goldfish", 84)}</span>` : ""}
-    ${day.t.map((t, i) => { const got = s.done && s.done[i]; const big = !!t[3];
-      return `<span class="${got && lastCatch === day.d + "-" + i ? "fish-new" : ""}" title="${esc(SUBJ[t[1]].n)}">${got ? spr(big ? "daily_yellow" : "daily_blue", big ? 28 : 22) : spr("daily_blue", 22, "filter:grayscale(1);opacity:.22")}</span>`; }).join("")}
-  </div></div>`;
+  h += netScene(day, s, c, n);
   if (!isToday) h += `<div class="center"><button class="today-btn" id="goToday">오늘로</button></div>`;
   if (day.exam) h += `<div class="group-h">이날 시험 과목</div><div class="group plain"><div class="row">
       <input class="text" id="note-${day.d}" data-d="${day.d}" placeholder="예: 미적분, 화학" value="${esc(s.note || "")}" aria-label="이날 시험 과목"></div></div>`;
