@@ -20,18 +20,18 @@
 :root {
   --bg: #f2f2f7; --cell: #ffffff; --label: #000000; --sub: rgba(60,60,67,.62); --sep: rgba(60,60,67,.22); --fill: rgba(120,120,128,.14);
   --blue: #007aff; --green: #34c759; --orange: #ff9500; --red: #ff3b30; --purple: #af52de; --teal: #30b0c7;
-  --indigo: #5856d6; --pink: #ff2d55; --brown: #a2845e; --gray: #8e8e93; --bar: rgba(249,249,249,.94);
+  --indigo: #5856d6; --pink: #ff2d55; --brown: #a2845e; --gray: #8e8e93; --bar: rgba(249,249,249,.94); --sea1: #bfe6ff; --sea2: #2f7fd1; --gold: #f5b800;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #000000; --cell: #1c1c1e; --label: #ffffff; --sub: rgba(235,235,245,.6); --sep: rgba(84,84,88,.6); --fill: rgba(118,118,128,.24);
   --blue: #0a84ff; --green: #30d158; --orange: #ff9f0a; --red: #ff453a; --purple: #bf5af2; --teal: #40c8e0;
-  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92);
+  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92); --sea1: #12345a; --sea2: #04111f; --gold: #ffcc1a;
   color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #000000; --cell: #1c1c1e; --label: #ffffff; --sub: rgba(235,235,245,.6); --sep: rgba(84,84,88,.6); --fill: rgba(118,118,128,.24);
   --blue: #0a84ff; --green: #30d158; --orange: #ff9f0a; --red: #ff453a; --purple: #bf5af2; --teal: #40c8e0;
-  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92);
+  --indigo: #5e5ce6; --pink: #ff375f; --brown: #ac8e68; --gray: #98989d; --bar: rgba(22,22,24,.92); --sea1: #12345a; --sea2: #04111f; --gold: #ffcc1a;
   color-scheme: dark }
 html { -webkit-text-size-adjust: 100%; }
 body { background: var(--bg); color: var(--label); font-family: var(--font); font-size: 17px; line-height: 1.35; -webkit-tap-highlight-color: transparent; }
@@ -88,6 +88,27 @@ input.text::placeholder { color: var(--gray); }
 .tab { flex: 1; max-width: 200px; background: none; border: 0; font: inherit; font-size: 10px; font-weight: 500; color: var(--gray); display: grid; justify-items: center; gap: 2px; padding: 7px 0 6px; cursor: pointer; }
 .tab svg { width: 26px; height: 26px; }
 .tab[aria-selected="true"] { color: var(--blue); }
+.net { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px; padding: 12px 16px; min-height: 44px; box-sizing: border-box; }
+.net svg { display: block; }
+.net .lbl { width: 100%; display: flex; justify-content: space-between; font-size: 13px; color: var(--sub); }
+.net .lbl b { color: var(--blue); font-weight: 600; }
+.full-net { color: var(--gold) !important; }
+.fish-new { animation: jump .6s ease-out; }
+@keyframes jump { 0% { transform: translateY(14px) rotate(20deg); opacity: 0; } 60% { transform: translateY(-6px) rotate(-8deg); opacity: 1; } 100% { transform: none; } }
+.sea { border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, var(--sea1), var(--sea2)); position: relative; aspect-ratio: 16 / 10; max-width: 100%; display: grid; place-items: center; }
+.sea .big { width: 62%; max-width: 320px; transition: transform .4s; }
+.sea .bob { animation: bob 3.2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-6px); } }
+.sea .bub { position: absolute; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.55); animation: rise 6s linear infinite; bottom: -10px; }
+@keyframes rise { to { transform: translateY(-260px); opacity: 0; } }
+.stage { text-align: center; margin-top: 14px; }
+.stage .nm { font-size: 22px; font-weight: 700; }
+.stage .rk { font-size: 15px; color: var(--sub); margin-top: 2px; }
+.log { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; padding: 12px; }
+.log .d { display: grid; justify-items: center; gap: 4px; font-size: 12px; color: var(--sub); font-variant-numeric: tabular-nums; padding: 6px 0; border-radius: 10px; }
+.log .d.today { background: var(--fill); color: var(--label); font-weight: 600; }
+.log .d svg { height: 22px; width: auto; }
+@media (prefers-reduced-motion: reduce) { .fish-new, .sea .bob, .sea .bub { animation: none; } .sea .bub { display: none; } }
 .status { font-size: 12px; color: var(--sub); text-align: center; margin-top: 24px; }
 @media (prefers-reduced-motion: reduce) { .prog i, .ck { transition: none; } }
 </style>
@@ -98,6 +119,7 @@ input.text::placeholder { color: var(--gray); }
   <button class="tab" role="tab" data-tab="today" id="tab-today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>오늘</button>
   <button class="tab" role="tab" data-tab="plan" id="tab-plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>일정</button>
   <button class="tab" role="tab" data-tab="how" id="tab-how"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>공부법</button>
+  <button class="tab" role="tab" data-tab="sea" id="tab-sea"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-5 9-6 13-2l5-4v12l-5-4c-4 4-10 3-13-2z"/><circle cx="7.5" cy="11" r=".6" fill="currentColor"/></svg>어장</button>
 </nav>
 
 <script>
@@ -312,6 +334,10 @@ function viewToday() {
     </div>
     <div class="prog"><i style="width:${n ? c / n * 100 : 0}%"></i></div>
     <div class="caption" style="margin-top:8px;text-align:center">${c}/${n} 완료${must.length ? ` · 필수 <b>${mustDone}/${must.length}</b>` : ""}</div>`;
+  h += `<div class="group"><div class="net"><div class="lbl"><span class="${c === n ? "full-net" : ""}">${c === n ? "만선! 오늘 그물이 꽉 찼어" : "오늘의 그물"}</span><span>${c === n ? "" : `만선까지 <b>${n - c}마리</b>`}</span></div>
+    ${day.t.map((t, i) => { const got = s.done && s.done[i]; const big = !!t[3];
+      return `<span class="${got && lastCatch === day.d + "-" + i ? "fish-new" : ""}" title="${esc(SUBJ[t[1]].n)}">${fish(big ? 34 : 24, got ? (c === n ? "var(--gold)" : big ? "var(--orange)" : "var(--blue)") : "none", !got)}</span>`; }).join("")}
+  </div></div>`;
   if (!isToday) h += `<div class="center"><button class="today-btn" id="goToday">오늘로</button></div>`;
   if (day.exam) h += `<div class="group-h">이날 시험 과목</div><div class="group plain"><div class="row">
       <input class="text" id="note-${day.d}" data-d="${day.d}" placeholder="예: 미적분, 화학" value="${esc(s.note || "")}" aria-label="이날 시험 과목"></div></div>`;
@@ -353,8 +379,49 @@ function viewHow() {
   return h;
 }
 
+let lastCatch = null;
+function fish(w, color, outline) {
+  const st = outline ? `fill="none" stroke="var(--gray)" stroke-width="1.6" stroke-dasharray="3 2.5" opacity=".7"` : `fill="${color}"`;
+  return `<svg width="${w}" height="${(w * 0.6).toFixed(1)}" viewBox="0 0 40 24" aria-hidden="true">
+    <path d="M3 12C9 2.5 24 2.5 31 12 24 21.5 9 21.5 3 12Z" ${st}/><path d="M30 12 39 4.5 37 12 39 19.5Z" ${st}/>
+    ${outline ? "" : '<circle cx="10.5" cy="10.2" r="2" fill="#fff"/><circle cx="10.2" cy="10.2" r="1" fill="#111"/><path d="M17 6.5q2.5 5.5 0 11" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1.4"/>'}</svg>`;
+}
+const STAGES = [
+  [0, "물고기 알", "견습 어부", null, 0],
+  [5, "치어", "초보 어부", "#9cc9ff", .32],
+  [20, "꼬마 고등어", "어부", "#5ba7ff", .48],
+  [40, "은빛 방어", "숙련 어부", "#a9b8c9", .64],
+  [60, "푸른 참치", "베테랑 어부", "#2f6fd6", .8],
+  [80, "대물 참치", "선장", "#1d4fa8", .92],
+  [100, "전설의 황금 참치", "전설의 선장", "var(--gold)", 1]
+];
+function stageOf(pct) { let k = 0; STAGES.forEach((x, i) => { if (pct >= x[0]) k = i; }); return k; }
+function viewSea() {
+  const [c, n] = totals(), pct = n ? Math.floor(c / n * 100) : 0, k = stageOf(pct), S = STAGES[k], nx = STAGES[k + 1];
+  const need = nx ? Math.max(0, Math.ceil(nx[0] / 100 * n) - c) : 0;
+  const bubbles = [12, 30, 55, 78, 88].map((x, i) => `<span class="bub" style="left:${x}%;width:${6 + i % 3 * 4}px;height:${6 + i % 3 * 4}px;animation-delay:${i * 1.2}s"></span>`).join("");
+  const big = k === 0
+    ? `<svg class="big bob" viewBox="0 0 80 48" style="width:34%" aria-hidden="true">${[[30,26],[42,20],[50,30],[38,34],[46,40]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="7" fill="rgba(255,236,200,.85)" stroke="rgba(255,255,255,.9)"/><circle cx="${x+1.5}" cy="${y-1}" r="2" fill="#e8892a"/>`).join("")}</svg>`
+    : `<div class="big bob" style="transform:scale(${S[4]})">${fish(320, S[3], false).replace('width="320"', 'width="100%"').replace(/height="[^"]+"/, "")}</div>`;
+  let h = `<div class="large">어장</div><div class="caption">할 일 하나 = 물고기 밥 한 번. 전부 채우면 전설의 황금 참치가 돼.</div>
+    <div class="sea" role="img" aria-label="${esc(S[1])}">${bubbles}${big}</div>
+    <div class="stage"><div class="nm">${esc(S[1])}</div><div class="rk">${esc(S[2])} · 전체 ${pct}% (${c}/${n})</div></div>
+    <div class="prog"><i style="width:${pct}%;background:${k === 6 ? "var(--gold)" : "var(--blue)"}"></i></div>
+    <div class="caption" style="text-align:center;margin-top:8px">${nx ? `다음 단계 <b>${esc(nx[1])}</b>까지 ${need}개` : "완전히 다 컸어. 수고했어, 선장님."}</div>
+    <div class="group-h"><span>어획 기록</span><span>금색 = 만선 · 주황 = 필수 완료</span></div><div class="group"><div class="log">`;
+  const today = todayStr();
+  PLAN.forEach(day => {
+    const [a, b] = count(day), s = st(day.d);
+    const must = day.t.map((t, i) => [t, i]).filter(([t]) => t[3]);
+    const mustAll = must.length && must.every(([, i]) => s.done && s.done[i]);
+    const icon = a === b ? fish(34, "var(--gold)") : mustAll ? fish(30, "var(--orange)") : a > 0 ? fish(22, "var(--blue)") : fish(22, "none", true);
+    h += `<button class="d${day.d === today ? " today" : ""}" data-go="${day.d}" style="border:0;background:${day.d === today ? "var(--fill)" : "none"};font:inherit;cursor:pointer;color:inherit">${icon}<span>${md(day.d)}</span></button>`;
+  });
+  h += `</div></div><div class="group-f">날짜를 누르면 그날 할 일로 가.</div>`;
+  return h;
+}
 function render() {
-  const v = ui.tab === "plan" ? viewPlan() : ui.tab === "how" ? viewHow() : viewToday();
+  const v = ui.tab === "plan" ? viewPlan() : ui.tab === "how" ? viewHow() : ui.tab === "sea" ? viewSea() : viewToday();
   $app.innerHTML = v;
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === ui.tab ? "true" : "false"));
 }
@@ -371,9 +438,9 @@ $app.addEventListener("click", e => {
 $app.addEventListener("change", e => {
   const el = e.target, d = el.dataset.d; if (!d) return;
   state[d] = state[d] || { done: {} }; state[d].done = state[d].done || {};
-  if (el.type === "checkbox") { if (el.checked) state[d].done[el.dataset.i] = true; else delete state[d].done[el.dataset.i]; }
+  if (el.type === "checkbox") { if (el.checked) { state[d].done[el.dataset.i] = true; lastCatch = d + "-" + el.dataset.i; } else delete state[d].done[el.dataset.i]; }
   else state[d].note = el.value.trim();
-  render(); persist(d);
+  render(); lastCatch = null; persist(d);
 });
 
 async function persist(d) {
