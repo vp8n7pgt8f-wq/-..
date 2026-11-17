@@ -123,107 +123,138 @@ input.text::placeholder { color: var(--gray); }
 </nav>
 
 <script>
-// 스티커 + 붓터치 스타일 물고기 일러스트 (원본 그림, SVG)
+// 사실적인 물고기 일러스트 (원본 SVG). 단계마다 배경 장식이 다름.
 function rnd(seed) { let x = seed; return () => (x = (x * 16807) % 2147483647) / 2147483647; }
-function sparkle(x, y, r, c) { return `<path d="M${x} ${y-r}Q${x} ${y} ${x+r} ${y}Q${x} ${y} ${x} ${y+r}Q${x} ${y} ${x-r} ${y}Q${x} ${y} ${x} ${y-r}Z" fill="${c}"/>`; }
-function strokes(seed, n, box, colors, w) {
-  const R = rnd(seed); let o = "";
-  for (let i = 0; i < n; i++) {
-    const x = box[0] + R() * box[2], y = box[1] + R() * box[3], L = 8 + R() * 22, a = -0.25 + R() * 0.5;
-    o += `<path d="M${x.toFixed(1)} ${y.toFixed(1)}l${(L*Math.cos(a)).toFixed(1)} ${(L*Math.sin(a)).toFixed(1)}" stroke="${colors[i % colors.length]}" stroke-width="${(w*(0.6+R()*0.8)).toFixed(1)}" stroke-linecap="round" opacity="${(0.25+R()*0.4).toFixed(2)}"/>`;
-  }
-  return o;
+function finPaths(list, id, color, edge) {
+  return list.map((d, i) => `<path d="${d}" fill="${color}" stroke="${edge}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="${d}" fill="url(#${id}ray${i % 2})" opacity=".55"/>`).join("");
 }
-// parts: {body, tail, fins:[], eye:[x,y,r], grad:[top,bottom], fin, finEdge, rim, box, marks, brush:[colors]}
-function sticker(id, p) {
-  const all = [p.tail, ...(p.fins || []), p.body];
-  const shape = d => `<path d="${d}"/>`;
-  return `
-  <defs>
-    <linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.grad[0]}"/><stop offset=".55" stop-color="${p.grad[1]}"/><stop offset="1" stop-color="${p.grad[2] || p.grad[1]}"/></linearGradient>
-    <clipPath id="${id}c"><path d="${p.body}"/></clipPath>
-    <filter id="${id}r" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="${p.seed || 4}"/><feDisplacementMap in="SourceGraphic" scale="3.5"/></filter>
+function realFish(id, o) {
+  const back = o.backFins || [], front = o.frontFins || [];
+  return `<defs>
+    <linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1">${o.grad.map((c, i) => `<stop offset="${(i / (o.grad.length - 1)).toFixed(2)}" stop-color="${c}"/>`).join("")}</linearGradient>
+    <linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".45" stop-color="#fff" stop-opacity=".3"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <radialGradient id="${id}s" cx=".7" cy=".35" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <pattern id="${id}sc" width="7" height="6" patternUnits="userSpaceOnUse"><path d="M0 6a3.5 3.5 0 0 1 7 0M-3.5 3a3.5 3.5 0 0 1 7 0M3.5 3a3.5 3.5 0 0 1 7 0" fill="none" stroke="${o.scale || "rgba(0,0,0,.18)"}" stroke-width=".7"/></pattern>
+    <pattern id="${id}ray0" width="3.2" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(${o.rayA || 20})"><line x1="0" y1="0" x2="0" y2="10" stroke="${o.ray}" stroke-width=".8"/></pattern>
+    <pattern id="${id}ray1" width="3.2" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(${-(o.rayA || 20)})"><line x1="0" y1="0" x2="0" y2="10" stroke="${o.ray}" stroke-width=".8"/></pattern>
+    <clipPath id="${id}c"><path d="${o.body}"/></clipPath>
+    <filter id="${id}sh" x="-10%" y="-10%" width="125%" height="135%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#0b2540" flood-opacity=".22"/></filter>
   </defs>
-  <g filter="url(#${id}r)">
-    <g fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round">${all.map(shape).join("")}</g>
-    <g fill="${p.rim}" transform="translate(2.5 3)">${all.map(shape).join("")}</g>
-    <g fill="${p.fin}" stroke="${p.finEdge}" stroke-width="2.2" stroke-linejoin="round">${[p.tail, ...(p.fins || [])].map(shape).join("")}</g>
-    <g clip-path="url(#${id}c)" fill="none">${[p.tail, ...(p.fins || [])].map(d => "").join("")}</g>
-    <path d="${p.body}" fill="url(#${id}g)"/>
-    <g clip-path="url(#${id}c)">${strokes(p.seed || 7, p.n || 70, p.box, p.brush, 4)}${p.marks || ""}</g>
-    <path d="${p.body}" fill="none" stroke="${p.edge}" stroke-width="2.4" stroke-linejoin="round"/>
-    ${p.extra || ""}
-    <circle cx="${p.eye[0]}" cy="${p.eye[1]}" r="${p.eye[2] + 1.6}" fill="#fff"/>
-    <circle cx="${p.eye[0]}" cy="${p.eye[1]}" r="${p.eye[2]}" fill="#1b1d3a"/>
-    <circle cx="${p.eye[0] + p.eye[2]*.35}" cy="${p.eye[1] - p.eye[2]*.35}" r="${p.eye[2]*.38}" fill="#fff"/>
+  <g filter="url(#${id}sh)">
+    ${finPaths([o.tail, ...back], id, o.fin, o.finEdge)}
+    <path d="${o.body}" fill="url(#${id}g)"/>
+    <g clip-path="url(#${id}c)">
+      ${o.noScale ? "" : `<rect x="0" y="0" width="220" height="144" fill="url(#${id}sc)"/>`}
+      ${o.marks || ""}
+      <rect x="0" y="0" width="220" height="144" fill="url(#${id}h)"/>
+      <rect x="0" y="0" width="220" height="144" fill="url(#${id}s)"/>
+    </g>
+    <path d="${o.body}" fill="none" stroke="${o.edge}" stroke-width="1" opacity=".6"/>
+    ${o.gill ? `<path d="${o.gill}" fill="none" stroke="${o.edge}" stroke-width="1.3" opacity=".55" stroke-linecap="round"/>` : ""}
+    ${o.mouth ? `<path d="${o.mouth}" fill="none" stroke="${o.edge}" stroke-width="1.2" opacity=".7" stroke-linecap="round"/>` : ""}
+    ${finPaths(front, id, o.fin, o.finEdge)}
+    ${o.extra || ""}
+    <circle cx="${o.eye[0]}" cy="${o.eye[1]}" r="${o.eye[2]}" fill="${o.iris || "#d9c27a"}"/>
+    <circle cx="${o.eye[0] + .3}" cy="${o.eye[1]}" r="${o.eye[2] * .62}" fill="#0c0f16"/>
+    <circle cx="${o.eye[0] + o.eye[2] * .3}" cy="${o.eye[1] - o.eye[2] * .35}" r="${o.eye[2] * .22}" fill="#fff" opacity=".9"/>
   </g>`;
 }
-const ART = {
-  egg() {
-    const eggs = [[90,70],[112,58],[128,78],[104,88],[124,100],[82,96],[142,62]];
-    return `<g>${eggs.map(([x,y]) => `<circle cx="${x}" cy="${y}" r="15" fill="#fff"/>`).join("")}
-      ${eggs.map(([x,y],i) => `<circle cx="${x}" cy="${y}" r="11" fill="${i%2?"#ffe3b8":"#ffd59a"}" stroke="#f08a3c" stroke-width="2"/><circle cx="${x+2}" cy="${y+1}" r="3.6" fill="#f06b2d"/><circle cx="${x-4}" cy="${y-4}" r="2.2" fill="#fff" opacity=".85"/>`).join("")}</g>`;
-  },
-  tropical(id) {
-    return sticker(id, {
-      body: "M42 70C62 46 122 38 165 54C178 59 187 66 189 72C181 84 160 92 120 92C86 92 61 86 42 70Z",
-      tail: "M48 70L12 40L24 70L12 102Z",
-      fins: ["M92 48L118 16L142 50Z", "M108 90L122 116L140 90Z"],
-      eye: [168, 66, 5.5], grad: ["#ffb02e", "#ff7a3d", "#ff4f8b"], fin: "#bff3ef", finEdge: "#2bb3b1",
-      rim: "#2fd3d0", edge: "#e8562f", box: [40, 40, 150, 55], brush: ["#ffd25e", "#ff5d7a", "#fff1c9", "#ff9a3c"],
-      marks: `<path d="M150 58q-4 10 0 22M156 58q-4 10 0 22" stroke="#c43a2c" stroke-width="2.4" fill="none" stroke-linecap="round"/>`, seed: 11
+const FISH = {
+  fry: id => realFish(id, {
+    body: "M60 72C76 63 124 59 158 66C168 68 173 71 173 73C167 78 140 83 110 84C86 84 70 80 60 72Z",
+    tail: "M64 72L42 62C44 66 45 69 45 72C45 75 44 78 42 82Z", backFins: ["M108 61C112 56 120 55 126 60Z"],
+    grad: ["rgba(150,190,205,.85)", "rgba(215,235,242,.8)", "rgba(245,250,252,.9)"], fin: "rgba(220,238,245,.55)", finEdge: "rgba(120,160,175,.6)", ray: "rgba(120,160,175,.6)",
+    edge: "#6f9aaa", noScale: true, eye: [160, 69, 4.2], iris: "#b8c6c9",
+    marks: `<path d="M66 72C90 72 130 71 156 70" stroke="rgba(90,120,135,.45)" stroke-width="1.2" fill="none"/><ellipse cx="140" cy="76" rx="6" ry="4" fill="rgba(240,190,120,.55)"/>`
+  }),
+  clown: id => realFish(id, {
+    body: "M42 72C50 48 92 39 130 42C160 46 182 58 186 72C182 88 160 100 130 102C92 104 52 96 42 72Z",
+    tail: "M46 72C32 58 20 54 10 57C7 66 7 78 10 88C20 91 32 86 46 72Z",
+    backFins: ["M70 47C78 32 98 29 110 40C120 30 142 31 152 47Z", "M100 100C108 116 130 120 142 98Z", "M122 98C120 112 112 118 104 121C110 110 112 104 112 98Z"],
+    frontFins: ["M140 76C128 84 120 92 118 100C130 96 140 88 146 80Z"],
+    grad: ["#f2700f", "#ff7a14", "#ff9a3c"], fin: "#ff7f1a", finEdge: "#1b1209", ray: "rgba(120,40,0,.35)", edge: "#8a3a05",
+    scale: "rgba(140,50,0,.16)", eye: [165, 64, 5], iris: "#ff9a2a", gill: "M150 52C143 66 143 82 151 96", mouth: "M184 72C181 74 178 75 175 75",
+    marks: `<g fill="none" stroke-linecap="round"><path d="M150 36C140 58 140 86 150 108" stroke="#111" stroke-width="15"/><path d="M150 36C140 58 140 86 150 108" stroke="#fbfbf6" stroke-width="11"/>
+      <path d="M100 34C114 58 114 86 100 110" stroke="#111" stroke-width="15"/><path d="M100 34C114 58 114 86 100 110" stroke="#fbfbf6" stroke-width="11"/>
+      <path d="M52 52C48 64 48 80 52 92" stroke="#111" stroke-width="10"/><path d="M52 52C48 64 48 80 52 92" stroke="#fbfbf6" stroke-width="6"/></g>`
+  }),
+  mackerel: id => {
+    const R = rnd(5); let bars = "";
+    for (let x = 40; x < 160; x += 9) bars += `<path d="M${x} ${52 + R() * 4}q${4 + R() * 3} ${6 + R() * 3} ${-1 + R() * 3} ${12 + R() * 4}" stroke="#102c33" stroke-width="${2.4 + R()}" fill="none" stroke-linecap="round" opacity=".8"/>`;
+    const finlets = [44, 52, 60, 68].map(x => `<path d="M${x} ${60 + (x - 44) * -.15}l4-5l2 5Z M${x} ${88 + (x - 44) * .1}l4 5l2-5Z" fill="#c9b04a" opacity=".85"/>`).join("");
+    return realFish(id, {
+      body: "M28 74C52 54 118 46 168 58C184 62 194 68 196 74C190 82 172 90 122 94C80 96 50 90 28 74Z",
+      tail: "M34 74C24 62 16 50 6 40C14 56 18 66 20 74C18 82 14 92 6 108C16 98 24 86 34 74Z",
+      backFins: ["M118 51L126 33L141 53Z", "M78 54L84 44L95 54Z", "M80 92L86 102L97 92Z"], frontFins: ["M152 75C142 77 133 81 127 87C137 85 147 81 154 78Z"],
+      grad: ["#1f5a63", "#3f8a92", "#a9c9cf", "#eef3f5", "#f7f9fa"], fin: "#4d7f88", finEdge: "#163e45", ray: "rgba(10,40,45,.4)", edge: "#163e45",
+      scale: "rgba(10,40,45,.1)", eye: [178, 68, 5.2], iris: "#c9cfd2", gill: "M164 61C157 69 157 81 163 88", mouth: "M196 74C192 76 188 77 184 77",
+      marks: `${bars}<rect x="0" y="68" width="220" height="40" fill="#eef3f5" opacity=".6"/><path d="M34 73C80 70 130 66 170 66" stroke="#6a8f96" stroke-width="1" fill="none"/>`,
+      extra: finlets
     });
   },
-  mackerel(id) {
-    return sticker(id, {
-      body: "M32 72C56 48 120 42 170 58C185 63 192 68 194 72C188 80 170 90 120 94C80 96 52 88 32 72Z",
-      tail: "M38 72L6 42L20 72L6 102Z",
-      fins: ["M100 49L113 28L128 51Z", "M110 92L118 108L130 92Z"],
-      eye: [174, 67, 5.8], grad: ["#2e3a9e", "#5f8fd8", "#dbe8f7"], fin: "#8fb1e8", finEdge: "#2a3486",
-      rim: "#ff3d7f", edge: "#232c7d", box: [30, 44, 165, 52], brush: ["#7fd7e8", "#ffffff", "#3b48b5", "#b9d4ff"],
-      marks: `<path d="M60 58q8 8 0 14M82 52q9 9 0 16M104 49q9 9 0 16M126 50q9 9 0 16M148 54q8 8 0 13" stroke="#1d2366" stroke-width="5" fill="none" stroke-linecap="round" opacity=".75"/>`, seed: 23
+  amberjack: id => realFish(id, {
+    body: "M26 74C48 50 120 40 172 54C188 59 196 66 198 74C192 84 172 96 120 100C76 102 46 94 26 74Z",
+    tail: "M32 74C22 60 14 46 2 34C12 52 16 64 18 74C16 84 12 96 2 114C14 102 22 88 32 74Z",
+    backFins: ["M58 55C78 45 108 42 128 48L124 54Z", "M136 49L144 38L152 52Z", "M66 94C82 102 102 104 114 99Z"], frontFins: ["M158 78C146 80 136 84 130 90C142 88 152 84 160 81Z"],
+    grad: ["#3c5f8f", "#6f8fb8", "#c4d0dd", "#f1f3f6"], fin: "#c9b25a", finEdge: "#6f6230", ray: "rgba(90,70,20,.35)", edge: "#2f4466",
+    scale: "rgba(30,50,80,.1)", eye: [182, 66, 5.4], iris: "#d8d2b8", gill: "M168 56C160 66 160 82 167 92", mouth: "M198 74C194 76 190 77 186 77",
+    marks: `<path d="M196 70C150 70 92 72 30 74" stroke="#f0c43c" stroke-width="4.5" fill="none" opacity=".9"/><path d="M178 52L190 70" stroke="#2a3550" stroke-width="3.5" stroke-linecap="round" opacity=".75"/>`
+  }),
+  tuna: id => {
+    const finlets = [40, 48, 56, 64, 72].map(x => `<path d="M${x} ${57 - (72 - x) * .05}l4-6l2 6Z M${x} ${92 + (72 - x) * .05}l4 6l2-6Z" fill="#f2c230" stroke="#6b5310" stroke-width=".6"/>`).join("");
+    return realFish(id, {
+      body: "M22 74C46 44 128 36 182 58C194 63 200 69 200 74C194 84 172 100 124 104C76 106 44 96 22 74Z",
+      tail: "M28 74C22 60 14 42 4 22C11 24 19 38 26 54C30 62 32 69 32 74C32 79 30 86 26 94C19 110 11 124 4 126C14 106 22 88 28 74Z",
+      backFins: ["M118 45L130 27L144 49Z", "M90 47C94 33 100 22 107 15C107 28 106 38 106 49Z", "M90 101C94 115 100 126 107 133C107 120 106 110 106 99Z"],
+      frontFins: ["M150 77C130 81 110 85 94 87C112 89 132 87 152 81Z"],
+      grad: ["#0d1a45", "#1f3a7a", "#7f97c0", "#e6ebf3", "#f5f7fa"], fin: "#1a2c63", finEdge: "#0b1638", ray: "rgba(200,210,240,.25)", edge: "#0b1638",
+      scale: "rgba(255,255,255,.06)", eye: [180, 66, 5.4], iris: "#c8ccd6", gill: "M164 57C155 68 155 84 163 94", mouth: "M200 74C196 76 192 77 188 77",
+      marks: `<path d="M30 70C80 64 140 60 186 64" stroke="#7fa6d6" stroke-width="3" fill="none" opacity=".45"/>`,
+      extra: finlets
     });
   },
-  amberjack(id) {
-    return sticker(id, {
-      body: "M32 70C50 32 128 26 174 54C189 63 196 70 195 75C186 93 150 110 102 108C66 106 44 92 32 70Z",
-      tail: "M38 72L4 40L16 72L4 104Z",
-      fins: ["M78 38C106 14 140 20 152 42Z", "M100 104C110 120 124 124 136 104Z"],
-      eye: [172, 66, 7], grad: ["#7c8fe0", "#c9d3f5", "#f3f4fb"], fin: "#a9b8ef", finEdge: "#3c4a9e",
-      rim: "#ff8fb3", edge: "#3a4796", box: [30, 28, 166, 82], brush: ["#ffe36b", "#b48df0", "#ffffff", "#7ec8f0"],
-      marks: `<path d="M48 74C90 70 140 66 186 70" stroke="#ffd43b" stroke-width="5" fill="none" stroke-linecap="round" opacity=".8"/><path d="M158 60q-6 14 2 26" stroke="#3a4796" stroke-width="2.4" fill="none" stroke-linecap="round"/>`, seed: 37
+  whale: id => {
+    const R = rnd(9); let mot = "";
+    for (let i = 0; i < 46; i++) mot += `<ellipse cx="${(40 + R() * 170).toFixed(1)}" cy="${(60 + R() * 26).toFixed(1)}" rx="${(1.5 + R() * 3).toFixed(1)}" ry="${(1 + R() * 1.8).toFixed(1)}" fill="#c9d8e8" opacity="${(.25 + R() * .35).toFixed(2)}"/>`;
+    let grooves = "";
+    for (let i = 0; i < 6; i++) grooves += `<path d="M206 ${84 + i * 2.2}C186 ${90 + i * 2.4} 160 ${93 + i * 2.2} 128 ${92 + i * 1.6}" stroke="#93a8bf" stroke-width=".9" fill="none" opacity=".7"/>`;
+    return realFish(id, {
+      body: "M30 84C52 70 100 58 150 56C184 55 206 64 211 77C212 89 192 99 156 101C110 103 66 97 30 84Z",
+      tail: "M34 84C26 76 16 70 2 68C8 75 16 80 22 84C16 88 8 93 2 100C16 99 26 92 34 86Z",
+      backFins: ["M66 72L78 63L84 72Z"], frontFins: ["M152 94C146 106 136 114 122 119C132 108 138 100 140 93Z"],
+      grad: ["#33506f", "#4f6f91", "#7f97b1", "#c3d0dd"], fin: "#3e5c7d", finEdge: "#22384f", ray: "rgba(0,0,0,0)", edge: "#22384f",
+      noScale: true, eye: [178, 81, 2.8], iris: "#5a6470", mouth: "M211 78C198 84 180 87 160 87",
+      marks: mot + grooves
     });
-  },
-  tuna(id) {
-    const finlets = [60,72,84].map(x => `<path d="M${x} 52l6-8l3 9Z M${x} 92l6 8l3-9Z" fill="#ffd23f" stroke="#1d2a6b" stroke-width="1.6"/>`).join("");
-    return sticker(id, {
-      body: "M26 72C50 40 130 34 182 58C193 64 199 69 199 72C193 82 171 96 120 100C76 102 46 92 26 72Z",
-      tail: "M32 72C22 56 14 40 2 24C18 34 26 52 30 66C26 82 18 100 2 118C16 104 24 90 32 72Z",
-      fins: ["M96 42L114 12L126 44Z", "M112 98L130 128L136 98Z"],
-      eye: [176, 66, 6], grad: ["#1b2668", "#4d6fc4", "#e6edf8"], fin: "#2a3a8f", finEdge: "#121a4f",
-      rim: "#28d7e8", edge: "#121a4f", box: [24, 36, 176, 66], brush: ["#7aa2ff", "#ffffff", "#2b3a96", "#b6f0ff"],
-      extra: finlets + `<path d="M150 60q-6 14 2 26" stroke="#121a4f" stroke-width="2.4" fill="none" stroke-linecap="round"/>`, seed: 51
-    });
-  },
-  whale(id) {
-    const drops = `<g fill="#9fe6ff" stroke="#fff" stroke-width="3">${[[170,26,6],[160,14,5],[182,14,5],[150,26,4],[192,28,4]].map(([x,y,r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join("")}</g>`;
-    return sticker(id, {
-      body: "M34 86C42 54 96 38 152 44C188 48 208 64 208 82C208 100 184 110 146 110C110 110 74 104 40 92Z",
-      tail: "M40 88C26 80 16 64 4 46C10 68 16 80 26 88C14 96 8 108 4 126C20 110 30 98 44 94Z",
-      fins: ["M118 102C114 118 104 128 90 132C102 120 106 110 108 100Z"],
-      eye: [176, 82, 4.6], grad: ["#2f5fc9", "#5b8ee6", "#d9ecff"], fin: "#3b6ad0", finEdge: "#1b3a8c",
-      rim: "#ff6fa5", edge: "#1b3a8c", box: [24, 40, 186, 72], brush: ["#8fc1ff", "#ffffff", "#2549a8", "#c7f0ff"], n: 110,
-      marks: `<path d="M196 96C170 104 130 106 100 100M192 102C166 108 128 110 96 104" stroke="#a9c7f2" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M196 88C176 92 156 92 140 90" stroke="#1b3a8c" stroke-width="2.4" fill="none" stroke-linecap="round"/>`, seed: 67
-    }) + drops;
   }
 };
+function deco(k) {
+  const bub = pts => pts.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="var(--bub)" stroke-width="1.4"/><circle cx="${x - r * .35}" cy="${y - r * .35}" r="${r * .22}" fill="var(--bub)"/>`).join("");
+  const raysDef = `<defs><linearGradient id="raysG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`;
+  const rays = raysDef + `<g opacity=".5">${[[40, 30], [90, 22], [150, 34]].map(([x, w]) => `<path d="M${x} -4L${x + w} -4L${x + w * 2.2} 150L${x + w * .6} 150Z" fill="url(#raysG)"/>`).join("")}</g>`;
+  const grass = `<g fill="none" stroke-linecap="round" opacity=".7"><path d="M14 146C10 128 22 116 16 98" stroke="#3f9a6a" stroke-width="3"/><path d="M22 146C24 130 14 120 22 106" stroke="#2f7f58" stroke-width="2.5"/><path d="M204 146C208 132 198 124 204 112" stroke="#3f9a6a" stroke-width="2.5"/></g>`;
+  const school = [[40, 28, .22], [168, 120, .18], [192, 30, .16]].map(([x, y, s]) => `<g transform="translate(${x} ${y}) scale(${s}) translate(-110 -72)" opacity=".28"><path d="M28 74C52 54 118 46 168 58C184 62 194 68 196 74C190 82 172 90 122 94C80 96 50 90 28 74ZM34 74L6 44L20 74L6 104Z" fill="#2c5f6a"/></g>`).join("");
+  const lines = `<g stroke="var(--bub)" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M8 50h22M14 98h18M196 112h16"/></g>`;
+  return [
+    bub([[40, 36, 5], [184, 108, 4], [196, 40, 3]]),
+    bub([[150, 40, 4], [162, 28, 2.5], [60, 106, 3]]),
+    grass + bub([[178, 34, 3.5], [188, 24, 2.2]]),
+    school,
+    rays,
+    lines + bub([[34, 34, 3]]),
+    rays + bub([[196, 50, 4], [204, 38, 2.5], [190, 32, 2]])
+  ][k];
+}
 function stageArt(k) {
-  const deco = [sparkle(28,30,9,"#ffd84a"), sparkle(196,118,8,"#4fd6e0"), sparkle(206,40,6,"#ff6fa5"), sparkle(20,112,6,"#7b8cff"),
-    `<circle cx="44" cy="20" r="4" fill="#ff9a3c"/><circle cx="186" cy="132" r="3.5" fill="#4fd6e0"/><circle cx="14" cy="70" r="3" fill="#ff6fa5"/>`].join("");
-  const map = [["egg"],["tropical",.45],["tropical",.85],["mackerel",.9],["amberjack",.95],["tuna",.92],["whale",.9]];
+  const map = [["egg"], ["fry", .8], ["clown", .72], ["mackerel", .88], ["amberjack", .92], ["tuna", .92], ["whale", .95]];
   const [name, sc] = map[k];
-  const inner = name === "egg" ? ART.egg() : `<g transform="translate(110 72) scale(${sc}) translate(-105 -72)">${ART[name]("s" + k)}</g>`;
-  return `<svg viewBox="0 0 220 144" width="100%" aria-hidden="true">${deco}${inner}</svg>`;
+  let inner;
+  if (name === "egg") {
+    const eggs = [[94, 70], [112, 60], [128, 76], [106, 86], [124, 94], [88, 90], [140, 62]];
+    inner = eggs.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="rgba(255,226,180,.75)" stroke="rgba(220,150,80,.6)" stroke-width="1"/><circle cx="${x + 1.5}" cy="${y + 1}" r="3" fill="#e0782a" opacity=".85"/><circle cx="${x + 2.4}" cy="${y + .4}" r=".9" fill="#222"/><circle cx="${x - 3}" cy="${y - 3.5}" r="1.6" fill="#fff" opacity=".8"/>`).join("");
+  } else inner = `<g transform="translate(110 72) scale(${sc}) translate(-108 -74)">${FISH[name]("s" + k)}</g>`;
+  return `<svg viewBox="0 0 220 144" width="100%" aria-hidden="true">${deco(k)}${inner}</svg>`;
 }
 
 const SUBJ = {
@@ -492,7 +523,7 @@ function fish(w, color, outline) {
 const STAGES = [
   [0, "물고기 알", "견습 어부"],
   [5, "치어", "초보 어부"],
-  [20, "꼬마 열대어", "어부"],
+  [20, "흰동가리", "어부"],
   [40, "고등어", "숙련 어부"],
   [60, "은빛 방어", "베테랑 어부"],
   [80, "참치", "선장"],
