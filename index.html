@@ -508,35 +508,12 @@ function taskRow(day, t, i) {
 }
 
 function netScene(day, s, c, n) {
-  const full = c === n && n > 0, fresh = lastCatch && lastCatch.startsWith(day.d);
-  const got = day.t.map((t, i) => [t, i]).filter(([, i]) => s.done && s.done[i]);
-  const fill = n ? c / n : 0;
-  const fishes = got.map(([t, i], j) => {
-    const yb = 6 + (n > 1 ? j / (n - 1) : 0) * 50;
-    const xb = 50 + (j % 2 ? 1 : -1) * (8 + (j * 37) % 19) - 14;
-    const rot = ((j * 53) % 34) - 17, big = !!t[3];
-    return `<img class="${lastCatch === day.d + "-" + i ? "fish-new" : ""}" src="${SPR[big ? "daily_yellow" : "daily_blue"]}" alt="" style="position:absolute;left:${xb}%;bottom:${yb}%;width:${big ? 30 : 25}%;transform:rotate(${rot}deg);z-index:${2 + j}">`;
-  }).join("");
-  const flags = full ? `<svg class="bunting${fresh ? " up" : ""}" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M4 6Q150 34 296 6" fill="none" stroke="#7a5a3a" stroke-width="1.6"/>
-      ${["#e53935","#fdd835","#1e88e5","#43a047","#fb8c00","#8e24aa","#e53935","#fdd835","#1e88e5","#43a047","#fb8c00"].map((col, i) => { const x = 18 + i * 25.5, y = 6 + 28 * (1 - Math.pow((x - 150) / 146, 2)) * .5; return `<path d="M${x - 9} ${y}L${x + 9} ${y}L${x} ${y + 15}Z" fill="${col}" style="animation-delay:${i * .08}s"/>`; }).join("")}
-    </svg>` : "";
-  return `<div class="catch${full ? " full" : ""}">
-    <div class="catch-h"><span class="${full ? "full-net" : ""}">${full ? "만선! 깃발 올려" : "오늘의 그물"}</span><span>${full ? `<button class="replay" data-cele="${day.d}">만선 다시 보기</button>` : `만선까지 <b>${n - c}마리</b>`}</span></div>
-    ${flags}
-    <div class="bag">
-      <svg class="mesh" viewBox="0 0 200 150" preserveAspectRatio="none" aria-hidden="true">
-        <defs><pattern id="meshP" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0H12M0 0V12" stroke="var(--rope)" stroke-width="1.1" fill="none"/></pattern>
-        <clipPath id="bagC"><path d="M14 10Q100 2 186 10L172 120Q100 160 28 120Z"/></clipPath>
-        <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sea1)"/><stop offset="1" stop-color="var(--sea2)"/></linearGradient></defs>
-        <g clip-path="url(#bagC)"><rect x="0" y="${150 - 150 * fill * .85}" width="200" height="150" fill="url(#waterG)" opacity=".55" style="transition:y .4s"/></g>
-        <path d="M14 10Q100 2 186 10L172 120Q100 160 28 120Z" fill="url(#meshP)" opacity=".75"/>
-        <path d="M14 10Q100 2 186 10L172 120Q100 160 28 120Z" fill="none" stroke="var(--rope)" stroke-width="2.4" stroke-linejoin="round"/>
-        <path d="M10 10Q100 0 190 10" fill="none" stroke="var(--rope-d)" stroke-width="5" stroke-linecap="round"/>
-      </svg>
-      <div class="pile">${fishes}${full ? [[2, 74, -24, "daily_blue"], [70, 78, 18, "daily_yellow"], [36, 84, 6, "daily_blue"], [56, 2, 12, "daily_yellow"], [14, 30, -8, "daily_blue"]].map(([x, y, r, k]) => `<img src="${SPR[k]}" alt="" style="position:absolute;left:${x}%;bottom:${y}%;width:24%;transform:rotate(${r}deg);z-index:30">`).join("") : ""}${full ? `<img class="gold${fresh ? " fish-new" : ""}" src="${SPR.goldfish}" alt="만선 금붕어" style="position:absolute;left:24%;bottom:46%;width:52%;z-index:40">` : ""}</div>
-    </div>
-  </div>`;
+  const full = c === n && n > 0;
+  return `<div class="group"><div class="net"><div class="lbl"><span class="${full ? "full-net" : ""}">${full ? "만선! 오늘 그물이 꽉 찼어" : "오늘의 그물"}</span><span>${full ? `<button class="replay" data-cele="${day.d}">만선 다시 보기</button>` : `만선까지 <b>${n - c}마리</b>`}</span></div>
+    ${full ? `<span title="만선">${spr("goldfish", 30)}</span>` : ""}
+    ${day.t.map((t, i) => { const got = s.done && s.done[i]; const big = !!t[3];
+      return `<span class="${got && lastCatch === day.d + "-" + i ? "fish-new" : ""}" title="${esc(SUBJ[t[1]].n)}">${got ? spr(big ? "daily_yellow" : "daily_blue", big ? 24 : 20) : spr("daily_blue", 20, "filter:grayscale(1);opacity:.22")}</span>`; }).join("")}
+  </div></div>`;
 }
 function viewToday() {
   if (!ui.day || !PLAN.some(p => p.d === ui.day)) ui.day = defaultDay();
